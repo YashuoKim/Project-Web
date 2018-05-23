@@ -57,7 +57,8 @@ def login_handle(request):
         s1=sha1()
         s1.update(upwd)
         if s1.hexdigest()==users[0].upwd:
-            red = HttpResponseRedirect('url', '/')
+            url = request.COOKIES.get('url', '/index/')
+            red = HttpResponseRedirect(url)
             #记住用户名
             if jizhu!=0:
                 red.set_cookie('uname', uname)
@@ -73,18 +74,28 @@ def login_handle(request):
         content = {'title':'用户登录', 'error_name':1, 'error_pwd':0, 'uname':uname, 'upwd':upwd}
         return render(request, 'df_user/login.html', content)
 
+def logout(request):
+    request.session.flush()
+    return redirect('/index/')
 
 @user_decorator.login
 def info(request):
     user_email = UserInfo.objects.get(id=request.session['user_id']).uemail
-    content ={'title':'用户中心',
-              'user_email':user_email,
+    #最近浏览
+    goods_ids = request.COOKIES.get('goods_ids', '')
+    goods_ids1 =goods_ids.split(',')
+    goods_list = []
+    for goods_id in goods_ids1:
+        goods_list.append(GoodsInfo.objects.get(id=int(goods_id)))
+
+    content ={'title':'用户中心','page_name':1,
+              'user_email':user_email, 'goods_list':goods_list,
               'user_name':request.session['user_name']}
     return render(request, 'df_user/user_center_info.html', content)
 
 @user_decorator.login
 def order(request):
-    content ={'title':'用户中心'}
+    content ={'title':'用户中心', 'page_name':1}
     return render(request, 'df_user/user_center_order.html', content)
 
 @user_decorator.login
@@ -97,5 +108,5 @@ def site(request):
         user.upostcode = post.get('upostcode')
         user.uphone = post.get('uphone')
         user.save()
-    content = {'title':'用户中心', 'user':user}
+    content = {'title':'用户中心', 'user':user, 'page_name':1}
     return render(request, 'df_user/user_center_site.html', content)

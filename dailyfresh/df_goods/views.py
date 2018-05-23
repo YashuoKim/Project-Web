@@ -55,4 +55,21 @@ def detail(request, id):
     news = goods.gtype.goodsinfo_set.order_by('-id')[0:2]
     content = {'title':goods.gtype.ttitle, 'guest_cart':1,
                'g':goods, 'news':news, 'id':id}
-    return render(request, 'df_goods/detail.html', content)
+    #以前是return render，现在是response=render，注意，当时的错误
+    response = render(request, 'df_goods/detail.html', content)
+    #记录最近浏览，在用户中心使用
+    goods_ids = request.COOKIES.get('goods_ids', '')
+    goods_id ='%d'%goods.id
+    if goods_ids !='':#判断是否有浏览记录，如果有则继续判断
+        goods_ids1 = goods_ids.split(',')#拆分为列表
+        if goods_ids1.count(goods_id)>=1:#如果商品已经被记录，则删除
+            goods_ids1.remove(goods_id)
+        goods_ids1.insert(0, goods_id)#添加到第一个
+        if len(goods_ids1)>=6:#如果超过6个则删除最后一个
+            del goods_ids1[5]
+        goods_ids = ','.join(goods_ids1)#拼接为字符串
+    else:
+        goods_ids = goods_id#如果没有浏览记录则直接加
+    response.set_cookie('goods_ids', goods_ids)#写入cookie
+
+    return response
