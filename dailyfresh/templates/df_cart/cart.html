@@ -1,46 +1,97 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
-<head>
-	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-	<title>天天生鲜-购物车</title>
-	<link rel="stylesheet" type="text/css" href="css/reset.css">
-	<link rel="stylesheet" type="text/css" href="css/main.css">
-</head>
-<body>
-	<div class="header_con">
-		<div class="header">
-			<div class="welcome fl">欢迎来到天天生鲜!</div>
-			<div class="fr">
-				<div class="login_info fl">
-					欢迎您：<em>张 山</em>
-				</div>
-				<div class="login_btn fl">
-					<a href="login.html">登录</a>
-					<span>|</span>
-					<a href="register.html">注册</a>
-				</div>
-				<div class="user_link fl">
-					<span>|</span>
-					<a href="user_center_info.html">用户中心</a>
-					<span>|</span>
-					<a href="cart.html">我的购物车</a>
-					<span>|</span>
-					<a href="user_center_order.html">我的订单</a>
-				</div>
-			</div>
-		</div>		
-	</div>
+{% extends 'base.html' %}
+{% block head %}
+    <script type="text/javascript">
+    //删除
+    function cart_del (cart_id) {
+        del=confirm('确定要删除吗？')
+        if(del){
+            $.get('/cart/delete'+cart_id+'/',function(data){
+               if(data.ok==1){
+                   $('ul').remove('#'+cart_id);
+                   total();
+               }
+            });
+        }
+    }
+    //计算小计和总价
+    function total(){
+        var total1 = 0;
+        var total_count = 0;
+        $('.col07').each(function(){
+            //获取数量
+            count = $(this).prev().find('input').val();
+            //获取单价
+            price = $(this).prev().prev().text();
+            //计算小计
+            total0 = parseFloat(count)*parseFloat(price)
+            $(this).text(total0.toFixed(2));
+            total1+=total0;
+            total_count++;
+        })
+        //显示总计
+        $('#total').text(total1.toFixed(2));
+        $('.total_count1').text(total_count);
+        $('.total_count em').text(total_count);
+    }
+     $(function () {
+         total();
+         $('#check_all').click(function(){
+             state=$(this).prop('checked');
+             $(':checkbox:not(#check_all)').prop('checked', state);
+         });
 
-	<div class="search_bar clearfix">
-		<a href="index.html" class="logo fl"><img src="images/logo.png"></a>
-		<div class="sub_page_name fl">|&nbsp;&nbsp;&nbsp;&nbsp;购物车</div>
-		<div class="search_con fr">
-			<input type="text" class="input_text fl" name="" placeholder="搜索商品">
-			<input type="button" class="input_btn fr" name="" value="搜索">
-		</div>		
-	</div>
+         $(':checkbox:not(#check_all)').click(function () {
+            if($(this).prop('checked')){
+                if($(':checked').length+1==$(':checkbox').length){
+                    $('#check_all').prop('checked',true);
+                }
+            } else{
+                $('#check_all').prop('checked',false);
+            }
+            total();
+         });
 
-	<div class="total_count">全部商品<em>2</em>件</div>	
+         //数量加
+         $('.add').click(function () {
+             txt=$(this).next();
+             txt.val(parseFloat(txt.val())+1).blur();
+         });
+
+         //数量减
+         $('.minus').click(function () {
+             txt=$(this).prev();
+             txt.val(parseFloat(txt.val())-1).blur();
+         });
+         //手动改数量
+
+         $('.num_show').blur(function () {
+             count=$(this).val();
+             var Vid = $(this).attr('id');
+             if(count==""){
+                 alert('请输入大于0的整数');
+                 window.setTimeout (function(){
+                     document.getElementById(Vid).focus();},0 );
+                 return;
+             }else if(count>=100){
+                 alert('数量不能超过100');
+                 window.setTimeout (function(){
+                     document.getElementById(Vid).focus();},0 );
+                 return;
+             }
+             cart_id=$(this).parents('.cart_list_td').attr('id');
+             $.get('/cart/edit'+cart_id+'_'+count+'/',function (data) {
+                 if(data.ok==0){//修改成功
+                     total();
+                 }else{//修改失败，显示原来的数量
+                     $(this).val(data.ok);
+                 }
+             })
+         });
+     });
+    </script>
+{%endblock head%}
+{%block content%}
+	<div class="total_count">全部商品<em>0</em>件</div>
 	<ul class="cart_list_th clearfix">
 		<li class="col01">商品名称</li>
 		<li class="col02">商品单位</li>
@@ -49,61 +100,38 @@
 		<li class="col05">小计</li>
 		<li class="col06">操作</li>
 	</ul>
-	<ul class="cart_list_td clearfix">
-		<li class="col01"><input type="checkbox" name="" checked></li>
-		<li class="col02"><img src="images/goods/goods012.jpg"></li>
-		<li class="col03">奇异果<br><em>25.80元/500g</em></li>
-		<li class="col04">500g</li>
-		<li class="col05">25.80元</li>
+    <form action="/order/" method="GET">
+{% for cart in carts %}
+	<ul class="cart_list_td clearfix" id="{{cart.id}}">
+		<li class="col01"><input type="checkbox" name="cart_id" value="{{cart.id}}" checked></li>
+        <li class="col02"><a href="/{{cart.goods.id}}/" ><img src="/static/{{cart.goods.gpic}}"></a></li>
+        <li class="col03">
+            {{cart.goods.gtitle}}<br/>
+            库存:{{cart.goods.gstore}}
+        </li>
+		<li class="col04">{{cart.goods.gunit}}</li>
+		<li class="col05">{{cart.goods.gprice}}</li>
 		<li class="col06">
 			<div class="num_add">
 				<a href="javascript:;" class="add fl">+</a>
-				<input type="text" class="num_show fl" value="1">	
+				<input type="text" class="num_show fl"
+                       onkeyup="value=value.replace(/[^\d]/g,'')" onpaste="return false"
+                       id="{{cart.id}}id" value="{{cart.count}}">
 				<a href="javascript:;" class="minus fl">-</a>	
 			</div>
 		</li>
 		<li class="col07">25.80元</li>
-		<li class="col08"><a href="javascript:;">删除</a></li>
+		<li class="col08"><a href="javascript:cart_del({{cart.id}});">删除</a></li>
 	</ul>
-
-	<ul class="cart_list_td clearfix">
-		<li class="col01"><input type="checkbox" name="" checked></li>
-		<li class="col02"><img src="images/goods/goods003.jpg"></li>
-		<li class="col03">大兴大棚草莓<br><em>16.80元/500g</em></li>
-		<li class="col04">500g</li>
-		<li class="col05">16.80元</li>
-		<li class="col06">
-			<div class="num_add">
-				<a href="javascript:;" class="add fl">+</a>
-				<input type="text" class="num_show fl" value="1">	
-				<a href="javascript:;" class="minus fl">-</a>	
-			</div>
-		</li>
-		<li class="col07">16.80元</li>
-		<li class="col08"><a href="javascript:;">删除</a></li>
-	</ul>
-	
+{% endfor %}
 
 	<ul class="settlements">
-		<li class="col01"><input type="checkbox" name="" checked=""></li>
+		<li class="col01"><input id="check_all" type="checkbox" name="" checked=""></li>
 		<li class="col02">全选</li>
-		<li class="col03">合计(不含运费)：<span>¥</span><em>42.60</em><br>共计<b>2</b>件商品</li>
-		<li class="col04"><a href="place_order.html">去结算</a></li>
+		<li class="col03">合计(不含运费)：<span>¥</span>
+            <em id="total">0</em>
+            <br>共计<b class="total_count1">0</b>件商品</li>
+		<li class="col04"><input class="order" name="" type="submit" value="去结算"></li>
 	</ul>
-
-	<div class="footer">
-		<div class="foot_link">
-			<a href="#">关于我们</a>
-			<span>|</span>
-			<a href="#">联系我们</a>
-			<span>|</span>
-			<a href="#">招聘人才</a>
-			<span>|</span>
-			<a href="#">友情链接</a>		
-		</div>
-		<p>CopyRight © 2016 北京天天生鲜信息技术有限公司 All Rights Reserved</p>
-		<p>电话：010-****888    京ICP备*******8号</p>
-	</div>
-	
-</body>
-</html>
+    </form>
+{%endblock content%}

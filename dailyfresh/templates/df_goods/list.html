@@ -1,4 +1,35 @@
 {% extends 'df_goods/base.html' %}
+{% block head %}
+    <script type="text/javascript">
+    $(function () {
+        $('.add_goods').click(function () {
+
+            var $add_x = $(this).offset().top;
+		    var $add_y = $(this).offset().left;
+		    var $to_x = $('#show_count').offset().top;
+		    var $to_y = $('#show_count').offset().left;
+
+
+            $(".add_jump").css({'left':$add_y,'top':$add_x,'display':'block'})
+
+		    //动画
+			$(".add_jump").stop().animate({
+				'left': $to_y+7,
+				'top': $to_x+7},
+				"normal", function() {
+					$(".add_jump").fadeOut('normal',function(){});
+
+			});
+
+            id = $(this).attr('id')
+            url =  '/cart/add'+id+'_1/';
+            $.get(url, function (data) {
+                $('#show_count').text(data.count);
+            })
+        })
+    })
+    </script>
+{% endblock head %}
 {% block detail2 %}
 		<div class="r_wrap fr clearfix">
 			<div class="sort_bar">
@@ -27,7 +58,11 @@
 					<div class="operate">
 						<span class="prize">￥{{g.gprice}}</span>
 						<span class="unit">{{g.gunit}}</span>
-						<a href="#" class="add_goods" title="加入购物车"></a>
+                        {% if request.session.user_name|default:'' != ''%}
+                            <a href="javascript:;" id="{{g.id}}" class="add_goods" title="加入购物车"></a>
+                         {% else %}
+                            <a href="/user/login/" class="add_goods" title="加入购物车"></a>
+                        {% endif %}
 					</div>
 				</li>
                 {% endfor %}
@@ -52,6 +87,7 @@
 				{% endif %}
 			</div>
 		</div>
+    <div class="add_jump"></div>
 {% endblock detail2%}
 
 

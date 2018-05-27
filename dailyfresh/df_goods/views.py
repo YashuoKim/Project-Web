@@ -2,7 +2,6 @@
 from django.shortcuts import render
 from models import TypeInfo
 from django.core.paginator import Paginator,Page
-from django.core.paginator import Paginator,Page
 from models import GoodsInfo
 
 def index(request):
@@ -41,7 +40,7 @@ def list(request, tid, pindex, sort):
     paginator = Paginator(goods_list, 10)
     page = paginator.page(int(pindex))
     content = {'title':typeinfo.ttitle, 'guest_cart':1,
-               'page':page,
+               'page':page, 'typeid':tid,
                'paginator':paginator,
                'typeinfo':typeinfo,
                'sort':sort,
@@ -50,11 +49,12 @@ def list(request, tid, pindex, sort):
 
 def detail(request, id):
     goods = GoodsInfo.objects.get(pk=int(id))
+    typeid = goods.gtype.id
     goods.gclick = goods.gclick+1
     goods.save()
     news = goods.gtype.goodsinfo_set.order_by('-id')[0:2]
     content = {'title':goods.gtype.ttitle, 'guest_cart':1,
-               'g':goods, 'news':news, 'id':id}
+               'g':goods, 'news':news, 'id':id, 'typeid':typeid}
     #以前是return render，现在是response=render，注意，当时的错误
     response = render(request, 'df_goods/detail.html', content)
     #记录最近浏览，在用户中心使用
@@ -73,3 +73,13 @@ def detail(request, id):
     response.set_cookie('goods_ids', goods_ids)#写入cookie
 
     return response
+
+#全文检索+中文分词
+from haystack.views import SearchView
+class MySearchView(SearchView):
+    def extra_context(self):
+        content = super(MySearchView, self).extra_context()
+        content['title'] = '搜索'
+        content['guest_cart'] = 1
+        #content['cart_count'] = cart_count(self.request)
+        return content

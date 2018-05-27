@@ -1,0 +1,3 @@
+{{object.gtitle}}
+{{obejct.gintro}}
+{{object.gdetail}}

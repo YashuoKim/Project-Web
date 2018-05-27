@@ -5,7 +5,8 @@
             num = parseFloat($('.num_show').val());
             $('.num_show').val(num+1);
             $('.num_show').blur();
-        }
+        };
+
         function minux() {
             num = parseFloat($('.num_show').val());
             if(num<=1){
@@ -13,40 +14,73 @@
             }
             $('.num_show').val(num-1);
             $('.num_show').blur();
-        }
+        };
+
         $(function () {
-        $('.num_show').blur(function () {
-                num = parseInt($('.num_show').val());
-                if(num<=1){
-                    num=1;
-                }
-                price = parseFloat($('#gprice').text());
-                total = num*price;
-                $('.num_show').val(num);
-                $('#gtotal').text(total.toFixed(2)+'元')
-               // $('#gprice').text(total.toFixed(2))
-               // $('#add_cart').attr('href', '/cart/add'+$('#grid').val()+)
-            })
-        })
-
-
-
-
-        /*$(function () {
+            num0 = $('.num_show').val();
             $('.num_show').blur(function () {
                 num = parseInt($('.num_show').val());
-                if(num<=1){
-                    num=1;
+                //当时怎么都不能设置这个值，采用$(this).val(num0)也是错的
+                if($(this).val()==""){
+                    num = num0;
                 }
                 price = parseFloat($('#gprice').text());
                 total = num*price;
                 $('.num_show').val(num);
                 $('#gtotal').text(total.toFixed(2)+'元')
-                $('#gprice').text(total.toFixed(2))
-                $('#add_cart').attr('href', '/cart/add'+$('#grid').val()+)
-            })
+               // $('#add_cart').attr('href', '/cart/add'+$('#grid').val()+)
+            });
 
-        })*/
+            var kkucun = true;
+            function kucun() {
+                kunn = $('#gstore').text()
+                if (kunn == 0){
+                    $('#gstore').replaceWith("<div style='height:60px; width:198px; color:red; font-size:22px;'>没有库存!</div>");
+                    kkucun = false;
+                }
+            };
+            kucun();
+
+            $('#buy_btn').click(function () {
+                txt = $('.num_show').val();
+                if (kkucun){
+               window.location.href='/cart/add{{g.id}}_'+txt+'/';
+                } else{alert('库存不足，等待补货');}
+            });
+
+        var $add_x = $('#add_cart').offset().top;
+		var $add_y = $('#add_cart').offset().left;
+		var $to_x = $('#show_count').offset().top;
+		var $to_y = $('#show_count').offset().left;
+		//$(".add_jump").css({'left':$add_y+80,'top':$add_x+10,'display':'block'})
+		$('#add_cart').click(function(){
+		    $(".add_jump").css({'left':$add_y+80,'top':$add_x+10,'display':'block'})
+		    //判断是否登录，若未登录则提示先登录
+            if($('.login_btn').text().indexOf('登录')>=0){
+                alert('请先登录后再购买')
+                location.href='/user/login/';
+                return;
+            }
+            if(kkucun) {
+                //动画
+                $(".add_jump").stop().animate({
+                        'left': $to_y + 7,
+                        'top': $to_x + 7
+                    },
+                    "normal", function () {
+                        $(".add_jump").fadeOut('normal', function () {
+                        });
+                    });
+                //异步
+                num = parseInt($('.num_show').val());
+                //$('#show_count').text(num);
+                $.get('/cart/add{{g.id}}_' + num + '/', function (data) {
+                    //console.log(data)
+                    $('#show_count').text(data.count);
+                });
+            }else{alert('库存不足，等待补货');};
+		})
+        })
     </script>
 {%endblock head%}
 {% block detail %}
@@ -63,14 +97,23 @@
 			<div class="goods_num clearfix">
 				<div class="num_name fl">数 量：</div>
 				<div class="num_add fl">
-					<input type="text" class="num_show fl"  value="1">
+					<input type="text" class="num_show fl"  onkeyup="value=value.replace(/[^\d]/g,'')" onpaste="return false" value="1">
 					<a href="javascript:add();" class="add fr">+</a>
 					<a href="javascript:minux();" class="minus fr">-</a>
-				</div> 
+				</div>
+                <div style="margin-left:185px;line-height:53px;overflow: hidden;">
+                    <div style="width:70px; height:52px; float:left">库存:</div>
+                    <div style="border: 1px solid #dddddd;width: 70px;height: 52px;text-align: center;
+                                overflow: hidden;font-size:20px;" id="gstore">{{g.gstore}}</div>
+                </div>
 			</div>
 			<div class="total">总价：<em id="gtotal">{{g.gprice}}元</em></div>
 			<div class="operate_btn">
-				<a href="javascript:;" class="buy_btn">立即购买</a>
+                 {% if request.session.user_name|default:'' != '' %}
+                     <a href="javascript:;" class="buy_btn" id="buy_btn">立即购买</a>
+                  {% else %}
+                     <a href="/user/login/" class="buy_btn" id="buy_btn">立即购买</a>
+                 {% endif %}
 				<a href="javascript:;" class="add_cart" id="add_cart">加入购物车</a>				
 			</div>
 		</div>
@@ -94,26 +137,4 @@
 
 {% block scrfoot %}
 	<div class="add_jump"></div>
-
-	<!--<script type="text/javascript" src="js/jquery-1.12.2.js"></script>-->
-	<script type="text/javascript">
-		var $add_x = $('#add_cart').offset().top;
-		var $add_y = $('#add_cart').offset().left;
-
-		var $to_x = $('#show_count').offset().top;
-		var $to_y = $('#show_count').offset().left;
-
-		$(".add_jump").css({'left':$add_y+80,'top':$add_x+10,'display':'block'})
-		$('#add_cart').click(function(){
-			$(".add_jump").stop().animate({
-				'left': $to_y+7,
-				'top': $to_x+7},
-				"fast", function() {
-					$(".add_jump").fadeOut('fast',function(){
-						$('#show_count').html(2);
-					});
-
-			});
-		})
-	</script>
 {% endblock scrfoot %}

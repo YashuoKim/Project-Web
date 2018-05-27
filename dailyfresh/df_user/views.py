@@ -4,7 +4,10 @@ from models import *
 from hashlib import sha1
 from django.http import JsonResponse,HttpResponseRedirect
 from . import user_decorator
-from df_goods.models import *
+from df_goods.models import GoodsInfo
+from df_order.models import OrderInfo
+from django.core.paginator import Paginator
+from df_cart.models import *
 
 def register(request):
     return render(request, 'df_user/register.html')
@@ -85,8 +88,9 @@ def info(request):
     goods_ids = request.COOKIES.get('goods_ids', '')
     goods_ids1 =goods_ids.split(',')
     goods_list = []
-    for goods_id in goods_ids1:
-        goods_list.append(GoodsInfo.objects.get(id=int(goods_id)))
+    if len(goods_ids):
+        for goods_id in goods_ids1:
+            goods_list.append(GoodsInfo.objects.get(id=int(goods_id)))
 
     content ={'title':'用户中心','page_name':1,
               'user_email':user_email, 'goods_list':goods_list,
@@ -110,3 +114,27 @@ def site(request):
         user.save()
     content = {'title':'用户中心', 'user':user, 'page_name':1}
     return render(request, 'df_user/user_center_site.html', content)
+
+@user_decorator.login
+def user_center_order(request, pageid):
+    """
+        此页面用户展示用户提交的订单，由购物车页面下单后转调过来，也可以从个人信息页面查看
+        根据用户订单是否支付、下单顺序进行排序
+     """
+    uid = request.session.get('user_id')
+    # 订单信息，根据是否支付、下单顺序进行排序
+    orderinfos = OrderInfo.objects.filter(user_id=uid).order_by('opay', '-oid')
+
+    # 分页
+    # 获取orderinfos list  以两个为一页的 list
+    paginator = Paginator(orderinfos, 2)
+    # 获取 上面集合的第 pageid 个 值
+    orderlist = paginator.page(int(pageid))
+
+
+    # 构造上下文
+    content = {'page_name': 1, 'title': '全部订单',
+               'order': 1, 'orderlist': orderlist,
+               'paginator':paginator}
+
+    return render(request, 'df_user/user_center_order.html', content)
