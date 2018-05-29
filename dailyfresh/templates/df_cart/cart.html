@@ -60,6 +60,9 @@
          //数量减
          $('.minus').click(function () {
              txt=$(this).prev();
+             if(parseFloat(txt.val())<=1){
+                return;
+            }
              txt.val(parseFloat(txt.val())-1).blur();
          });
          //手动改数量

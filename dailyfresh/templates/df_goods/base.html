@@ -42,7 +42,7 @@
 				<ul>
                     {% for new in news %}
 					<li>
-						<a href="/{new.id}/"><img src="/static/{{new.gpic}}"></a>
+						<a href="/{{new.id}}/"><img src="/static/{{new.gpic}}"></a>
 						<h4><a href="/{{new.id}}">{{new.gtitle}}</a></h4>
 						<div class="prize">￥{{ new.gprice}}</div>
 					</li>

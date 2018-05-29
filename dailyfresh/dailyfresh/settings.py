@@ -24,9 +24,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '#&rg%*2o@tq)imii=)4j*f!vldy%th&#pfxb92ng2@ttd+x_w0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+#DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+#ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -117,9 +119,9 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static')
 ]
 #开发阶段上传文件目录
-MEDIA_ROOT = os.path.join(BASE_DIR, 'static')
+#MEDIA_ROOT = os.path.join(BASE_DIR, 'static')
 #部署后的上传文件目录
-# MEDIA_ROOT = '/var/www/dailyfresh/static'
+STATIC_ROOT = '/usr/share/nginx/dailyfresh/static/'
 
 TINYMCE_DEFAULT_CONFIG = {
     'theme': 'advanced',
